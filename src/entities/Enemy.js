@@ -15,9 +15,13 @@ export class Enemy extends Phaser.GameObjects.Container {
     this.lastTalkAt = 0;
 
     this.sprite = scene.add.image(0, 0, `enemy_${enemyId.toLowerCase()}`);
+    // 半径に比例してスプライト表示サイズを設定 (キャラ絵を視認しやすいサイズに)
+    const displaySize = this.data_.radius * 2.8;
+    this.sprite.setDisplaySize(displaySize, displaySize);
     this.add(this.sprite);
 
-    // HPバー
+    // HPバー (スプライト上端より少し上に配置)
+    this.hpBarY = -displaySize / 2 - 6;
     this.hpBar = scene.add.graphics();
     this.add(this.hpBar);
     this.drawHpBar();
@@ -30,8 +34,8 @@ export class Enemy extends Phaser.GameObjects.Container {
     const w = 30;
     const h = 4;
     const ratio = Math.max(0, this.hp / this.data_.hp);
-    this.hpBar.fillStyle(0x222222, 1).fillRect(-w / 2, -this.data_.radius - 8, w, h);
-    this.hpBar.fillStyle(0xff4466, 1).fillRect(-w / 2, -this.data_.radius - 8, w * ratio, h);
+    this.hpBar.fillStyle(0x222222, 1).fillRect(-w / 2, this.hpBarY, w, h);
+    this.hpBar.fillStyle(0xff4466, 1).fillRect(-w / 2, this.hpBarY, w * ratio, h);
   }
 
   update(time, delta) {
@@ -57,7 +61,7 @@ export class Enemy extends Phaser.GameObjects.Container {
 
   talk() {
     const line = Phaser.Utils.Array.GetRandom(this.data_.talkLines);
-    new SpeechBubble(this.scene, this.x, this.y - this.data_.radius - 18, line, {
+    new SpeechBubble(this.scene, this.x, this.y + this.hpBarY - 12, line, {
       textColor: '#ffcc66',
       borderColor: 0xaa3322,
       fillColor: 0x1a0810,
