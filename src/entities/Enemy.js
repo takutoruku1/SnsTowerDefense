@@ -1,5 +1,5 @@
 // 敵（罵言雑言）
-// 右からフィールドを横切り、主人公の近くに来たら「話しかけ」攻撃を始める
+// 左からフィールドを横切り、主人公の近くに来たら「話しかけ」攻撃を始める
 import { ENEMIES } from '../data/enemies.js';
 import { ENEMY_TALK_RANGE, ENEMY_TALK_INTERVAL_MS } from '../data/config.js';
 

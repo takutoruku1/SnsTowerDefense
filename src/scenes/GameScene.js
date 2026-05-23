@@ -173,7 +173,7 @@ export class GameScene extends Phaser.Scene {
 
   spawnEnemy(enemyId, lane) {
     if (this.gameOver) return;
-    const x = FIELD_X + GRID_COLS * CELL_SIZE + 40;
+    const x = FIELD_X - 40;
     const y = FIELD_Y + lane * CELL_SIZE + CELL_SIZE / 2;
     const enemy = new Enemy(this, x, y, enemyId, this.influencer);
     this.enemies.push(enemy);
