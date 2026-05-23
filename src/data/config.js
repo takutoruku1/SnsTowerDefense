@@ -34,4 +34,4 @@ export const TL_REFRESH_COST = 10;
 // 敵の話しかけ攻撃: 主人公への接近時のダメージ単位
 // （遠隔から「話しかけ」られて主人公が傷つく演出）
 export const ENEMY_TALK_RANGE = CELL_SIZE * 2.5; // この距離まで近づいたら発言開始
-export const ENEMY_TALK_INTERVAL_MS = 1500;
+export const ENEMY_TALK_INTERVAL_MS = 900;       // 攻撃レンジ内で発言する間隔 (短いほど誹謗中傷スパムが激しい)
