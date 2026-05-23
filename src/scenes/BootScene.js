@@ -50,8 +50,7 @@ export class BootScene extends Phaser.Scene {
       if (!this.textures.exists(key)) this.generateEnemyPlaceholder(key, e);
     });
 
-    this.scene.start('GameScene');
-    this.scene.launch('UIScene');
+    this.scene.start('TitleScene');
   }
 
   // --- happy.png から stressed / broken を動的生成 ---
