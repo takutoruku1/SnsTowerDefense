@@ -5,12 +5,14 @@ import {
   FIELD_X, FIELD_Y,
   INFLUENCER_X, INFLUENCER_Y,
   COST_START, COST_MAX, COST_REGEN_PER_SEC,
+  perspectiveX, entityScaleAtRow, rowAtY,
 } from '../data/config.js';
 import { ALLIES, MVP_ALLIES } from '../data/allies.js';
 import { WAVES } from '../data/waves.js';
 import { Influencer } from '../entities/Influencer.js';
 import { Enemy } from '../entities/Enemy.js';
 import { Ally } from '../entities/Ally.js';
+import { Comment } from '../entities/Comment.js';
 
 export class GameScene extends Phaser.Scene {
   constructor() {
@@ -43,13 +45,18 @@ export class GameScene extends Phaser.Scene {
     // グリッド描画
     this.drawGrid();
 
-    // 主人公
-    this.influencer = new Influencer(this, INFLUENCER_X, INFLUENCER_Y);
+    // 主人公（フィールド右隣 = 最前列扱いで透視配置）
+    const infRow = rowAtY(INFLUENCER_Y);
+    const infX = perspectiveX(INFLUENCER_X, infRow);
+    this.influencer = new Influencer(this, infX, INFLUENCER_Y);
+    this.influencer.setScale(entityScaleAtRow(infRow));
+    this.influencer.setDepth(INFLUENCER_Y);
 
     // 状態
     this.cost = COST_START;
     this.enemies = [];
     this.allies = [];
+    this.comments = []; // 飛行中のコメント
     this.selectedAllyId = null;
     this.cellOccupancy = Array.from({ length: GRID_COLS }, () => Array(GRID_ROWS).fill(null));
     this.gameOver = false;
@@ -58,14 +65,6 @@ export class GameScene extends Phaser.Scene {
 
     // セルクリックで配置
     this.setupGridInput();
-
-    // 敵の話しかけで主人公にダメージ
-    this.events.on('enemy-talk', (atk) => {
-      if (this.gameOver) return;
-      const dead = this.influencer.takeDamage(atk);
-      this.events.emit('hp-changed', this.influencer.hp, this.influencer.maxHp);
-      if (dead) this.handleGameOver();
-    });
 
     // 敵撃破
     this.events.on('enemy-killed', (enemy) => {
@@ -76,13 +75,23 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
+    // 味方撃破: 配列とセル占有から取り除く
+    this.events.on('ally-killed', (ally) => {
+      this.allies = this.allies.filter(a => a !== ally);
+      for (let c = 0; c < GRID_COLS; c++) {
+        for (let r = 0; r < GRID_ROWS; r++) {
+          if (this.cellOccupancy[c][r] === ally) this.cellOccupancy[c][r] = null;
+        }
+      }
+    });
+
     // UI側からのイベント
     this.events.on('select-ally', (id) => {
       this.selectedAllyId = id;
       this.events.emit('selection-updated', id);
     });
 
-    // WAVE 開始
+    // WAVE 開始 (初回だけ準備時間を長めに)
     this.startWave(0);
 
     // 初期UI更新
@@ -91,18 +100,40 @@ export class GameScene extends Phaser.Scene {
   }
 
   drawGrid() {
+    const yTop = FIELD_Y;
+    const yBot = FIELD_Y + GRID_ROWS * CELL_SIZE;
+
+    // フィールド床（台形）: 奥行きを強調するため少し暗めの面を敷く
+    const floor = this.add.graphics();
+    const xTL = perspectiveX(FIELD_X, 0);
+    const xTR = perspectiveX(FIELD_X + GRID_COLS * CELL_SIZE, 0);
+    const xBL = perspectiveX(FIELD_X, GRID_ROWS);
+    const xBR = perspectiveX(FIELD_X + GRID_COLS * CELL_SIZE, GRID_ROWS);
+    floor.fillStyle(0x1a0612, 0.55);
+    floor.fillPoints([
+      { x: xTL, y: yTop },
+      { x: xTR, y: yTop },
+      { x: xBR, y: yBot },
+      { x: xBL, y: yBot },
+    ], true);
+
     const g = this.add.graphics();
-    g.lineStyle(1, 0xff44aa, 0.25);
+    g.lineStyle(1, 0xff44aa, 0.28);
+
+    // 縦線（消失点に向かう奥行きライン）
     for (let c = 0; c <= GRID_COLS; c++) {
+      const lx = FIELD_X + c * CELL_SIZE;
       g.beginPath();
-      g.moveTo(FIELD_X + c * CELL_SIZE, FIELD_Y);
-      g.lineTo(FIELD_X + c * CELL_SIZE, FIELD_Y + GRID_ROWS * CELL_SIZE);
+      g.moveTo(perspectiveX(lx, 0), yTop);
+      g.lineTo(perspectiveX(lx, GRID_ROWS), yBot);
       g.strokePath();
     }
+    // 横線（手前ほど横幅が広い）
     for (let r = 0; r <= GRID_ROWS; r++) {
+      const y = FIELD_Y + r * CELL_SIZE;
       g.beginPath();
-      g.moveTo(FIELD_X, FIELD_Y + r * CELL_SIZE);
-      g.lineTo(FIELD_X + GRID_COLS * CELL_SIZE, FIELD_Y + r * CELL_SIZE);
+      g.moveTo(perspectiveX(FIELD_X, r), y);
+      g.lineTo(perspectiveX(FIELD_X + GRID_COLS * CELL_SIZE, r), y);
       g.strokePath();
     }
   }
@@ -124,12 +155,20 @@ export class GameScene extends Phaser.Scene {
   highlightCell(c, r, on) {
     this.cellHighlight.clear();
     if (!on || !this.selectedAllyId || this.cellOccupancy[c][r]) return;
-    const x = FIELD_X + c * CELL_SIZE;
-    const y = FIELD_Y + r * CELL_SIZE;
+    const lx0 = FIELD_X + c * CELL_SIZE;
+    const lx1 = lx0 + CELL_SIZE;
+    const y0 = FIELD_Y + r * CELL_SIZE;
+    const y1 = y0 + CELL_SIZE;
+    const pts = [
+      { x: perspectiveX(lx0, r),     y: y0 },
+      { x: perspectiveX(lx1, r),     y: y0 },
+      { x: perspectiveX(lx1, r + 1), y: y1 },
+      { x: perspectiveX(lx0, r + 1), y: y1 },
+    ];
     this.cellHighlight.fillStyle(0xff44aa, 0.18);
-    this.cellHighlight.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-    this.cellHighlight.lineStyle(2, 0xff66cc, 0.8);
-    this.cellHighlight.strokeRect(x, y, CELL_SIZE, CELL_SIZE);
+    this.cellHighlight.fillPoints(pts, true);
+    this.cellHighlight.lineStyle(2, 0xff66cc, 0.85);
+    this.cellHighlight.strokePoints(pts, true);
   }
 
   tryPlace(c, r, x, y) {
@@ -141,7 +180,12 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.cost -= data.cost;
-    const ally = new Ally(this, x, y, this.selectedAllyId);
+    // 透視: セル中心行で X を絞り、行に応じた表示倍率を適用
+    const rowCenter = r + 0.5;
+    const px = perspectiveX(x, rowCenter);
+    const ally = new Ally(this, px, y, this.selectedAllyId);
+    ally.setScale(entityScaleAtRow(rowCenter));
+    ally.setDepth(y);
     this.allies.push(ally);
     this.cellOccupancy[c][r] = ally;
     this.events.emit('cost-changed', Math.floor(this.cost), COST_MAX);
@@ -155,40 +199,76 @@ export class GameScene extends Phaser.Scene {
     this.currentWaveIdx = idx;
     const wave = WAVES[idx];
     this.waveFinished = false;
-    this.remainingEnemyCount = wave.spawns.length;
+    this.pendingSpawns = wave.spawns.length;
     this.events.emit('wave-changed', idx + 1, WAVES.length);
     this.events.emit('enemies-changed', this.remainingCount());
 
+    // 準備時間: 初回 WAVE は 3 秒、それ以降は 0.8 秒
+    const prepMs = idx === 0 ? 3000 : 800;
+    this.showWaveStartBanner(idx + 1, prepMs);
+
     wave.spawns.forEach(spawn => {
-      this.time.delayedCall(spawn.delayMs, () => {
+      this.time.delayedCall(prepMs + spawn.delayMs, () => {
         this.spawnEnemy(spawn.enemyId, spawn.lane);
       });
     });
 
     // 全スポーン完了をマーク
     const last = Math.max(...wave.spawns.map(s => s.delayMs));
-    this.time.delayedCall(last + 100, () => {
+    this.time.delayedCall(prepMs + last + 100, () => {
       this.waveFinished = true;
       if (this.enemies.length === 0 && !this.gameOver) this.handleWaveClear();
     });
   }
 
+  showWaveStartBanner(waveNum, durationMs) {
+    const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, `WAVE ${waveNum}`, {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '54px',
+      color: '#ff77cc',
+      stroke: '#1a0520',
+      strokeThickness: 6,
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setAlpha(0).setDepth(2500);
+    const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30, '炎上が迫っています…', {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '16px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setAlpha(0).setDepth(2500);
+
+    this.tweens.add({
+      targets: [main, sub],
+      alpha: 1,
+      duration: 220,
+      onComplete: () => {
+        // バナーは prep の長さに応じて表示し、終わる前にフェード
+        const hold = Math.max(0, durationMs - 600);
+        this.time.delayedCall(hold, () => {
+          this.tweens.add({
+            targets: [main, sub],
+            alpha: 0,
+            duration: 350,
+            onComplete: () => { main.destroy(); sub.destroy(); },
+          });
+        });
+      },
+    });
+  }
+
   spawnEnemy(enemyId, lane) {
     if (this.gameOver) return;
-    const x = FIELD_X - 40;
+    const rowCenter = lane + 0.5;
+    const x = perspectiveX(FIELD_X - 40, rowCenter);
     const y = FIELD_Y + lane * CELL_SIZE + CELL_SIZE / 2;
     const enemy = new Enemy(this, x, y, enemyId, this.influencer);
     this.enemies.push(enemy);
+    if (this.pendingSpawns > 0) this.pendingSpawns -= 1;
+    this.events.emit('enemies-changed', this.remainingCount());
   }
 
   remainingCount() {
     // まだ出現していない＋出現中の敵の合計
-    return this.enemies.length + this.pendingSpawnCount();
-  }
-
-  pendingSpawnCount() {
-    // 簡易: スポーン完了フラグまでの残数を推定（厳密版が必要なら別実装に）
-    return this.waveFinished ? 0 : 0;
+    return this.enemies.length + (this.pendingSpawns || 0);
   }
 
   handleGameOver() {
@@ -293,9 +373,88 @@ export class GameScene extends Phaser.Scene {
     this.cost = Math.min(COST_MAX, this.cost + COST_REGEN_PER_SEC * (delta / 1000));
     this.events.emit('cost-changed', Math.floor(this.cost), COST_MAX);
 
-    // 敵更新
-    this.enemies.forEach(e => e.update(time, delta));
+    // 敵更新（同レーンの味方をブロッカーとして殴る）
+    this.enemies.forEach(e => e.update(time, delta, this.allies));
     // 味方更新（射程内の敵を狙う）
     this.allies.forEach(a => a.update(time, delta, this.enemies));
+
+    // コメント移動
+    this.comments.forEach(c => c.step(delta));
+    // 衝突解決
+    this.resolveCommentCollisions();
+    // destroyed されたコメントを掃除
+    this.comments = this.comments.filter(c => c.scene);
+  }
+
+  addComment(side, x, y, text, atk) {
+    const c = new Comment(this, x, y, { side, text, hp: atk, damage: atk });
+    this.comments.push(c);
+    return c;
+  }
+
+  resolveCommentCollisions() {
+    const HIT = 26;
+    const HIT_SQ = HIT * HIT;
+    const LANE_TOL = CELL_SIZE * 0.55;
+    const HIT_TARGET = 30;
+    const INF_HIT_X = 60;
+    const INF_LANE_TOL = 160;
+
+    // 1) コメント同士 (敵 vs 味方): 互いに削り合う
+    for (let i = 0; i < this.comments.length; i++) {
+      const a = this.comments[i];
+      if (a.dead || a.side !== 'enemy') continue;
+      for (let j = 0; j < this.comments.length; j++) {
+        const b = this.comments[j];
+        if (b.dead || b.side !== 'ally') continue;
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        if (dx * dx + dy * dy < HIT_SQ) {
+          const ad = a.damage, bd = b.damage;
+          a.hit(bd);
+          b.hit(ad);
+        }
+      }
+    }
+
+    // 2) 味方コメント → 敵 にヒット
+    for (const c of this.comments) {
+      if (c.dead || c.side !== 'ally') continue;
+      for (const e of this.enemies) {
+        if (!e.alive) continue;
+        if (Math.abs(e.y - c.y) > LANE_TOL) continue;
+        if (Math.abs(e.x - c.x) < HIT_TARGET) {
+          e.takeDamage(c.damage);
+          c.fade();
+          break;
+        }
+      }
+    }
+
+    // 3) 敵コメント → 味方 (Ally) にヒット
+    for (const c of this.comments) {
+      if (c.dead || c.side !== 'enemy') continue;
+      for (const ally of this.allies) {
+        if (!ally.alive) continue;
+        if (Math.abs(ally.y - c.y) > LANE_TOL) continue;
+        if (Math.abs(ally.x - c.x) < HIT_TARGET) {
+          ally.takeDamage(c.damage);
+          c.fade();
+          break;
+        }
+      }
+    }
+
+    // 4) 敵コメント → 主人公
+    for (const c of this.comments) {
+      if (c.dead || c.side !== 'enemy') continue;
+      if (Math.abs(this.influencer.y - c.y) > INF_LANE_TOL) continue;
+      if (Math.abs(this.influencer.x - c.x) < INF_HIT_X) {
+        const dead = this.influencer.takeDamage(c.damage);
+        this.events.emit('hp-changed', this.influencer.hp, this.influencer.maxHp);
+        if (dead) this.handleGameOver();
+        c.fade();
+      }
+    }
   }
 }

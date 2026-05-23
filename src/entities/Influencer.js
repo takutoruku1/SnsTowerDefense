@@ -30,7 +30,14 @@ export class Influencer extends Phaser.GameObjects.Container {
     this.maxHp = INFLUENCER_MAX_HP;
     this.hp = this.maxHp;
 
+    // sprite を先に作って足元 Y を決め、その後に shadow → sprite の順で重ねる
     this.sprite = scene.add.image(0, 0, 'influencer_happy').setOrigin(0.5, 0.6);
+    // origin (0.5, 0.6) なので足元は y = displayHeight * 0.4。少し下に余裕を持たせる。
+    const feetY = this.sprite.displayHeight * 0.4 - 6;
+    const shadowW = Math.max(80, this.sprite.displayWidth * 0.55);
+
+    this.shadow = scene.add.ellipse(0, feetY, shadowW, 22, 0x000000, 0.45);
+    this.add(this.shadow);
     this.add(this.sprite);
 
     // ハート枠（演出）

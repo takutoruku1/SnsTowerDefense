@@ -13,7 +13,7 @@ export class SpeechBubble extends Phaser.GameObjects.Container {
       fontSize = '13px',
       tailDir = 1,        // 1: tail at bottom, -1: tail at top
       duration = 1400,    // hold duration before fade out
-      depth = 50,
+      depth = 2000,
     } = opts;
 
     this.setDepth(depth);

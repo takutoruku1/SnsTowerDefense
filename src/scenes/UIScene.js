@@ -27,6 +27,9 @@ export class UIScene extends Phaser.Scene {
     this.waveText = this.add.text(panelX + 20, 50, `WAVE 1 / ${WAVES.length}`, {
       fontSize: '20px', color: '#fff', fontStyle: 'bold',
     });
+    this.enemiesText = this.add.text(panelX + 180, 54, '残り敵: -', {
+      fontSize: '14px', color: '#ff99aa',
+    });
 
     // コスト表示
     this.costText = this.add.text(panelX + 20, 80, 'コスト: 30 / 100', {
@@ -75,6 +78,9 @@ export class UIScene extends Phaser.Scene {
     });
     gameScene.events.on('wave-changed', (cur, total) => {
       this.waveText.setText(`WAVE ${cur} / ${total}`);
+    });
+    gameScene.events.on('enemies-changed', (n) => {
+      this.enemiesText.setText(`残り敵: ${n}`);
     });
     gameScene.events.on('selection-updated', (id) => {
       this.cards.forEach(c => {

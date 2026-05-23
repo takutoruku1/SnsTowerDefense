@@ -11,6 +11,10 @@ export class Ally extends Phaser.GameObjects.Container {
     this.hp = this.data_.hp;
     this.lastAttackAt = 0;
 
+    // 足元の影（地に足が付いた印象を出す）。Container の最下層へ追加。
+    this.shadow = scene.add.ellipse(0, 32, 60, 14, 0x000000, 0.4);
+    this.add(this.shadow);
+
     this.sprite = scene.add.image(0, 0, this.data_.texture).setDisplaySize(70, 70);
     this.add(this.sprite);
 
@@ -64,18 +68,39 @@ export class Ally extends Phaser.GameObjects.Container {
     }
   }
 
-  shoot(target) {
-    // 投稿（弾）を飛ばす演出
-    const bullet = this.scene.add.circle(this.x, this.y, 5, 0xff66cc);
+  takeDamage(amount) {
+    if (!this.alive) return;
+    this.hp -= amount;
+    this.drawHpBar();
+    // 被弾フラッシュ
     this.scene.tweens.add({
-      targets: bullet,
-      x: target.x,
-      y: target.y,
-      duration: 200,
+      targets: this.sprite,
+      alpha: 0.4,
+      duration: 60,
+      yoyo: true,
+    });
+    if (this.hp <= 0) this.kill();
+  }
+
+  kill() {
+    if (!this.alive) return;
+    this.alive = false;
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0,
+      scale: this.scaleX * 0.4,
+      duration: 250,
       onComplete: () => {
-        bullet.destroy();
-        if (target.alive) target.takeDamage(this.data_.atk);
+        this.scene.events.emit('ally-killed', this);
+        this.destroy();
       },
     });
+  }
+
+  shoot(_target) {
+    // コメントとして左方向へ発射 (具体的なターゲットは中継しない。
+    //  飛行中のコリジョンでヒット対象が決まる)
+    const muzzleX = this.x - 30;
+    this.scene.addComment('ally', muzzleX, this.y, this.data_.name, this.data_.atk);
   }
 }
