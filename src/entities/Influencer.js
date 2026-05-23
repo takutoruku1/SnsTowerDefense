@@ -1,6 +1,26 @@
 // 主人公（炎上系インフルエンサー）
-// HP段階でスプライトを差し替える
+// HP段階でスプライトを差し替える + 定期的に吹き出しで発言
 import { INFLUENCER_MAX_HP, HP_THRESHOLDS } from '../data/config.js';
+import { SpeechBubble } from './SpeechBubble.js';
+
+const TALK_LINES_HAPPY = [
+  'ほら、また燃えてるw',
+  'もっとやれよwww',
+  '炎上上等！',
+  '今日も平常運転w',
+  'コメント欄カオスで草',
+];
+const TALK_LINES_STRESSED = [
+  'うぜぇんだよ…',
+  'もういいって…',
+  'なんで俺ばっか',
+  'ちょっと黙れよ',
+];
+const TALK_LINES_BROKEN = [
+  '助けて…',
+  'もうやだ…',
+  '消えたい…',
+];
 
 export class Influencer extends Phaser.GameObjects.Container {
   constructor(scene, x, y) {
@@ -17,6 +37,40 @@ export class Influencer extends Phaser.GameObjects.Container {
     this.aura = scene.add.graphics();
     this.add(this.aura);
     this.drawAura();
+
+    // 吹き出し定期発動
+    this.scheduleTalk();
+  }
+
+  scheduleTalk() {
+    const delay = 3500 + Math.random() * 2500;
+    this.scene.time.delayedCall(delay, () => {
+      if (!this.scene || !this.active || this.hp <= 0) return;
+      this.talk();
+      this.scheduleTalk();
+    });
+  }
+
+  talk() {
+    const ratio = this.hp / this.maxHp;
+    let lines = TALK_LINES_HAPPY;
+    let color = '#ff99cc';
+    if (ratio < HP_THRESHOLDS.STRESSED) {
+      lines = TALK_LINES_BROKEN;
+      color = '#88aaff';
+    } else if (ratio < HP_THRESHOLDS.HAPPY) {
+      lines = TALK_LINES_STRESSED;
+      color = '#ffaa88';
+    }
+    const line = Phaser.Utils.Array.GetRandom(lines);
+    new SpeechBubble(this.scene, this.x, this.y - 80, line, {
+      textColor: color,
+      borderColor: 0xff44aa,
+      fillColor: 0x1a0828,
+      fontSize: '13px',
+      tailDir: 1,
+      duration: 1800,
+    });
   }
 
   drawAura() {
