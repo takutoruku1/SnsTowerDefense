@@ -1,23 +1,47 @@
 // 味方（投稿）データ — モックの数値準拠
-// MVPでは ZAMAA と YOUGO の2種のみ使用。他はPhase 4以降で解放予定。
+// MVP では 6 種すべてを使用 (信者きっしょw は PNG 未配置のためプレースホルダ表示)
 
 export const ALLIES = {
   ZAMAA: {
     id: 'ZAMAA',
     name: 'ざまぁwww',
-    category: '罵',      // 罵言
+    category: '罵',
     cost: 15,
     hp: 220,
     atk: 45,
-    range: 1.5,           // セル数
+    range: 1.5,
     attackIntervalMs: 1000,
     texture: 'ally_zamaa',
-    color: 0xff3380,      // 仮スプライト用カラー
+    color: 0xff3380,
+  },
+  DARE: {
+    id: 'DARE',
+    name: '誰も好きじゃないよね',
+    category: '罵',
+    cost: 20,
+    hp: 300,
+    atk: 60,
+    range: 2.0,
+    attackIntervalMs: 1100,
+    texture: 'ally_dare',
+    color: 0xffaa66,
+  },
+  SHINJA: {
+    id: 'SHINJA',
+    name: '信者きっしょw',
+    category: '罵',
+    cost: 25,
+    hp: 300,
+    atk: 65,
+    range: 2.5,
+    attackIntervalMs: 1100,
+    texture: 'ally_shinja',
+    color: 0xaa66ff,
   },
   YOUGO: {
     id: 'YOUGO',
     name: '擁護してる人えらい!',
-    category: '擁',      // 擁護
+    category: '擁',
     cost: 20,
     hp: 400,
     atk: 30,
@@ -26,7 +50,31 @@ export const ALLIES = {
     texture: 'ally_yougo',
     color: 0x33ddff,
   },
+  ITSUMO: {
+    id: 'ITSUMO',
+    name: 'いつも応援してます!',
+    category: '擁',
+    cost: 30,
+    hp: 500,
+    atk: 40,
+    range: 1.5,
+    attackIntervalMs: 1200,
+    texture: 'ally_itsumo',
+    color: 0xff77aa,
+  },
+  NETA: {
+    id: 'NETA',
+    name: 'ネタにしてて草',
+    category: 'ネタ',
+    cost: 15,
+    hp: 180,
+    atk: 20,
+    range: 3.0,
+    attackIntervalMs: 1500,
+    texture: 'ally_neta',
+    color: 0xffcc66,
+  },
 };
 
-// MVPで使う2種
-export const MVP_ALLIES = ['ZAMAA', 'YOUGO'];
+// MVP で使う 6 種 (カード表示順)
+export const MVP_ALLIES = ['ZAMAA', 'DARE', 'SHINJA', 'YOUGO', 'ITSUMO', 'NETA'];

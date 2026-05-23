@@ -16,7 +16,7 @@ export class Enemy extends Phaser.GameObjects.Container {
 
     this.sprite = scene.add.image(0, 0, `enemy_${enemyId.toLowerCase()}`);
     // 半径に比例してスプライト表示サイズを設定 (キャラ絵を視認しやすいサイズに)
-    const displaySize = this.data_.radius * 2.8;
+    const displaySize = this.data_.radius * 3.5;
     this.sprite.setDisplaySize(displaySize, displaySize);
     this.add(this.sprite);
 
