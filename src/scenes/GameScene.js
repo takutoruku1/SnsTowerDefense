@@ -54,6 +54,7 @@ export class GameScene extends Phaser.Scene {
     this.cellOccupancy = Array.from({ length: GRID_COLS }, () => Array(GRID_ROWS).fill(null));
     this.gameOver = false;
     this.waveCleared = false;
+    this.currentWaveIdx = 0;
 
     // セルクリックで配置
     this.setupGridInput();
@@ -87,7 +88,6 @@ export class GameScene extends Phaser.Scene {
     // 初期UI更新
     this.events.emit('cost-changed', Math.floor(this.cost), COST_MAX);
     this.events.emit('hp-changed', this.influencer.hp, this.influencer.maxHp);
-    this.events.emit('wave-changed', 1, WAVES.length);
   }
 
   drawGrid() {
@@ -152,9 +152,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   startWave(idx) {
+    this.currentWaveIdx = idx;
     const wave = WAVES[idx];
     this.waveFinished = false;
     this.remainingEnemyCount = wave.spawns.length;
+    this.events.emit('wave-changed', idx + 1, WAVES.length);
     this.events.emit('enemies-changed', this.remainingCount());
 
     wave.spawns.forEach(spawn => {
@@ -191,19 +193,64 @@ export class GameScene extends Phaser.Scene {
 
   handleGameOver() {
     this.gameOver = true;
-    this.showCenterMessage('GAME OVER', '#ff3366', '主人公のメンタルが崩壊した…');
+    this.showEndMessage('GAME OVER', '#ff3366', '主人公のメンタルが崩壊した…');
   }
 
   handleWaveClear() {
     if (this.waveCleared) return;
     this.waveCleared = true;
-    this.gameOver = true;
-    this.showCenterMessage('WAVE CLEAR!', '#ffcc44', '炎上を完全鎮火！');
+
+    const isLast = this.currentWaveIdx >= WAVES.length - 1;
+    if (isLast) {
+      this.gameOver = true;
+      this.showEndMessage('GAME CLEAR!', '#ffcc44', '全ての炎上を完全鎮火した！');
+    } else {
+      this.showWaveClearBanner(() => {
+        this.waveCleared = false;
+        this.startWave(this.currentWaveIdx + 1);
+      });
+    }
   }
 
-  showCenterMessage(text, color, sub) {
-    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.5);
-    const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, text, {
+  showWaveClearBanner(onDone) {
+    const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `WAVE ${this.currentWaveIdx + 1} CLEAR!`, {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '64px',
+      color: '#ffcc44',
+      stroke: '#000',
+      strokeThickness: 6,
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setAlpha(0);
+    const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, '次の炎上が迫っています…', {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '18px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setAlpha(0);
+
+    this.tweens.add({
+      targets: [main, sub],
+      alpha: 1,
+      duration: 300,
+      onComplete: () => {
+        this.time.delayedCall(1800, () => {
+          this.tweens.add({
+            targets: [main, sub],
+            alpha: 0,
+            duration: 400,
+            onComplete: () => {
+              main.destroy();
+              sub.destroy();
+              onDone();
+            },
+          });
+        });
+      },
+    });
+  }
+
+  showEndMessage(text, color, sub) {
+    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6);
+    const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 70, text, {
       fontFamily: '"Noto Sans JP", sans-serif',
       fontSize: '72px',
       color,
@@ -211,15 +258,32 @@ export class GameScene extends Phaser.Scene {
       strokeThickness: 6,
       fontStyle: 'bold',
     }).setOrigin(0.5);
-    const subText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50, sub, {
+    const subText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10, sub, {
       fontFamily: '"Noto Sans JP", sans-serif',
       fontSize: '22px',
       color: '#ffffff',
     }).setOrigin(0.5);
-    overlay.setAlpha(0);
-    main.setAlpha(0);
-    subText.setAlpha(0);
-    this.tweens.add({ targets: [overlay, main, subText], alpha: 1, duration: 400 });
+
+    const btnY = GAME_HEIGHT / 2 + 100;
+    const btn = this.add.rectangle(GAME_WIDTH / 2, btnY, 260, 56, 0x1a0520)
+      .setStrokeStyle(2, 0xff44aa)
+      .setInteractive({ useHandCursor: true });
+    const btnText = this.add.text(GAME_WIDTH / 2, btnY, 'タイトルへ戻る', {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '20px',
+      color: '#ff77cc',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    [overlay, main, subText, btn, btnText].forEach(o => o.setAlpha(0));
+    this.tweens.add({ targets: [overlay, main, subText, btn, btnText], alpha: 1, duration: 400 });
+
+    btn.on('pointerover', () => btn.setFillStyle(0x2a0a35));
+    btn.on('pointerout', () => btn.setFillStyle(0x1a0520));
+    btn.on('pointerdown', () => {
+      this.scene.stop('UIScene');
+      this.scene.start('TitleScene');
+    });
   }
 
   update(time, delta) {

@@ -1,6 +1,7 @@
 // UIシーン: HP/コスト/WAVE表示、味方選択パネル
 import { GAME_WIDTH, GAME_HEIGHT } from '../data/config.js';
 import { ALLIES, MVP_ALLIES } from '../data/allies.js';
+import { WAVES } from '../data/waves.js';
 
 export class UIScene extends Phaser.Scene {
   constructor() {
@@ -23,7 +24,7 @@ export class UIScene extends Phaser.Scene {
     });
 
     // WAVE / 残り敵数
-    this.waveText = this.add.text(panelX + 20, 50, 'WAVE 1 / 1', {
+    this.waveText = this.add.text(panelX + 20, 50, `WAVE 1 / ${WAVES.length}`, {
       fontSize: '20px', color: '#fff', fontStyle: 'bold',
     });
 

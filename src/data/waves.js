@@ -1,8 +1,9 @@
-// WAVE 定義 — MVPは1WAVEのみ
+// WAVE 定義 — 5 WAVE 構成 (難易度カーブ: チュートリアル → ラッシュ)
 // spawns: { enemyId, delayMs, lane } の配列。
 // lane は 0..GRID_ROWS-1（出現する行）
 
 export const WAVES = [
+  // WAVE 1: チュートリアル相当 — 荒らしマン中心、粘着は2体だけ
   {
     waveNumber: 1,
     spawns: [
@@ -15,6 +16,100 @@ export const WAVES = [
       { enemyId: 'ARASHI',   delayMs: 11000, lane: 2 },
       { enemyId: 'NENCHAKU', delayMs: 13000, lane: 2 },
       { enemyId: 'ARASHI',   delayMs: 15000, lane: 3 },
+    ],
+  },
+  // WAVE 2: 同時2レーン出現が増える
+  {
+    waveNumber: 2,
+    spawns: [
+      { enemyId: 'ARASHI',   delayMs: 500,   lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 500,   lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 2500,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 2500,  lane: 2 },
+      { enemyId: 'NENCHAKU', delayMs: 4500,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 6000,  lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 6500,  lane: 3 },
+      { enemyId: 'NENCHAKU', delayMs: 8500,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 10000, lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 10500, lane: 2 },
+      { enemyId: 'NENCHAKU', delayMs: 12500, lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 14000, lane: 3 },
+    ],
+  },
+  // WAVE 3: 粘着アンチが増えてタフ化
+  {
+    waveNumber: 3,
+    spawns: [
+      { enemyId: 'NENCHAKU', delayMs: 1000,  lane: 1 },
+      { enemyId: 'NENCHAKU', delayMs: 1000,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 3000,  lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 3000,  lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 5000,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 5000,  lane: 2 },
+      { enemyId: 'NENCHAKU', delayMs: 7000,  lane: 0 },
+      { enemyId: 'NENCHAKU', delayMs: 7000,  lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 9000,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 9500,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 11000, lane: 0 },
+      { enemyId: 'NENCHAKU', delayMs: 12500, lane: 1 },
+      { enemyId: 'NENCHAKU', delayMs: 12500, lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 14000, lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 15000, lane: 0 },
+    ],
+  },
+  // WAVE 4: 高密度ラッシュ
+  {
+    waveNumber: 4,
+    spawns: [
+      { enemyId: 'ARASHI',   delayMs: 500,   lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 500,   lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 1500,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 1500,  lane: 3 },
+      { enemyId: 'NENCHAKU', delayMs: 3000,  lane: 0 },
+      { enemyId: 'NENCHAKU', delayMs: 3000,  lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 4500,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 4500,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 6000,  lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 6000,  lane: 3 },
+      { enemyId: 'NENCHAKU', delayMs: 7500,  lane: 1 },
+      { enemyId: 'NENCHAKU', delayMs: 7500,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 9500,  lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 10000, lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 11000, lane: 1 },
+      { enemyId: 'NENCHAKU', delayMs: 12500, lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 14000, lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 14500, lane: 3 },
+    ],
+  },
+  // WAVE 5: 最終決戦 — 粘着多め、波状攻撃
+  {
+    waveNumber: 5,
+    spawns: [
+      { enemyId: 'NENCHAKU', delayMs: 500,   lane: 0 },
+      { enemyId: 'NENCHAKU', delayMs: 500,   lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 1500,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 1500,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 2500,  lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 2500,  lane: 3 },
+      { enemyId: 'NENCHAKU', delayMs: 4000,  lane: 1 },
+      { enemyId: 'NENCHAKU', delayMs: 4000,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 5500,  lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 5500,  lane: 3 },
+      { enemyId: 'ARASHI',   delayMs: 6500,  lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 6500,  lane: 2 },
+      { enemyId: 'NENCHAKU', delayMs: 8000,  lane: 0 },
+      { enemyId: 'NENCHAKU', delayMs: 8000,  lane: 3 },
+      { enemyId: 'NENCHAKU', delayMs: 9500,  lane: 1 },
+      { enemyId: 'NENCHAKU', delayMs: 9500,  lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 11000, lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 11000, lane: 1 },
+      { enemyId: 'ARASHI',   delayMs: 11500, lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 11500, lane: 3 },
+      { enemyId: 'NENCHAKU', delayMs: 13500, lane: 1 },
+      { enemyId: 'NENCHAKU', delayMs: 13500, lane: 2 },
+      { enemyId: 'ARASHI',   delayMs: 15000, lane: 0 },
+      { enemyId: 'ARASHI',   delayMs: 15500, lane: 3 },
+      { enemyId: 'NENCHAKU', delayMs: 17000, lane: 1 },
     ],
   },
 ];
