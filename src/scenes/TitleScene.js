@@ -108,6 +108,11 @@ export class TitleScene extends Phaser.Scene {
     });
 
     const startGame = () => {
+      // BGM 再生開始 (autoplay 制限回避のためユーザー操作のタイミングで)
+      let bgm = this.sound.get('bgm_main');
+      if (!bgm) bgm = this.sound.add('bgm_main', { loop: true, volume: 0.4 });
+      if (!bgm.isPlaying) bgm.play();
+
       this.scene.start('GameScene');
       this.scene.launch('UIScene');
     };

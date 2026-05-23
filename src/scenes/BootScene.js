@@ -24,6 +24,9 @@ export class BootScene extends Phaser.Scene {
       this.load.image(`enemy_${e.id.toLowerCase()}`, `${ASSET_BASE}/enemies/${e.id.toLowerCase()}.png`);
     });
 
+    // BGM
+    this.load.audio('bgm_main', `${ASSET_BASE}/bgm/main.mp3`);
+
     this.load.on('loaderror', (file) => {
       console.warn('[asset missing → placeholder]', file.key, file.src);
     });
