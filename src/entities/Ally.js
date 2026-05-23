@@ -47,14 +47,12 @@ export class Ally extends Phaser.GameObjects.Container {
 
     if (time - this.lastAttackAt < this.data_.attackIntervalMs) return;
 
-    // 射程内（左方向）の最も近い敵を探す
+    // 射程内 (全方向、ユークリッド距離) で最も近い敵を探す
     const rangePx = this.data_.range * CELL_SIZE;
     let target = null;
     let bestDist = Infinity;
     for (const e of enemies) {
       if (!e.alive) continue;
-      // 自分より左側にいる敵のみ狙う
-      if (e.x >= this.x) continue;
       const d = Phaser.Math.Distance.Between(this.x, this.y, e.x, e.y);
       if (d <= rangePx && d < bestDist) {
         bestDist = d;
@@ -97,10 +95,10 @@ export class Ally extends Phaser.GameObjects.Container {
     });
   }
 
-  shoot(_target) {
-    // コメントとして左方向へ発射 (具体的なターゲットは中継しない。
-    //  飛行中のコリジョンでヒット対象が決まる)
-    const muzzleX = this.x - 30;
-    this.scene.addComment('ally', muzzleX, this.y, this.data_.name, this.data_.atk);
+  shoot(target) {
+    // ターゲット方向にコメント発射 (たて/よこ/斜めにも飛ばせる)
+    const dirX = target.x - this.x;
+    const dirY = target.y - this.y;
+    this.scene.addComment('ally', this.x, this.y, this.data_.name, this.data_.atk, dirX, dirY);
   }
 }

@@ -12,13 +12,21 @@ export class Comment extends Phaser.GameObjects.Container {
     super(scene, x, y);
     scene.add.existing(this);
 
-    const { side, text, hp, damage } = opts;
+    const { side, text, hp, damage, dirX = 0, dirY = 0 } = opts;
     this.side = side;       // 'ally' | 'enemy'
     this.hp = hp;
     this.damage = damage;
     this.dead = false;
     this.lifeMs = LIFETIME_MS;
-    this.vx = side === 'enemy' ? SPEED_PX_PER_SEC : -SPEED_PX_PER_SEC;
+
+    // 任意方向に飛ばす。dir が 0 の場合は左右デフォルト (敵→右、味方→左)
+    let dx = dirX, dy = dirY;
+    if (dx === 0 && dy === 0) {
+      dx = side === 'enemy' ? 1 : -1;
+    }
+    const norm = Math.hypot(dx, dy) || 1;
+    this.vx = (dx / norm) * SPEED_PX_PER_SEC;
+    this.vy = (dy / norm) * SPEED_PX_PER_SEC;
 
     const textColor   = side === 'enemy' ? '#ffcc66' : '#ff99cc';
     const fillColor   = side === 'enemy' ? 0x1a0810 : 0x140828;
@@ -53,6 +61,7 @@ export class Comment extends Phaser.GameObjects.Container {
   step(delta) {
     if (this.dead) return;
     this.x += this.vx * (delta / 1000);
+    this.y += this.vy * (delta / 1000);
     this.lifeMs -= delta;
     if (this.lifeMs <= 0) this.fade();
   }

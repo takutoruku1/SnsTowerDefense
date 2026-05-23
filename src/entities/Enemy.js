@@ -1,7 +1,7 @@
 // 敵（罵言雑言）
 // 左からフィールドを横切り、停止状態 (主人公の射程内 or 味方ブロック中) でコメントを連射する
 import { ENEMIES } from '../data/enemies.js';
-import { ENEMY_TALK_RANGE, ENEMY_TALK_INTERVAL_MS, CELL_SIZE, entityScaleAtRow, rowAtY } from '../data/config.js';
+import { ENEMY_TALK_INTERVAL_MS, CELL_SIZE, entityScaleAtRow, rowAtY } from '../data/config.js';
 
 // 自分より右(影響者側) かつ同レーンにある最も近い生存 Ally を返す
 function findBlockingAlly(enemy, allies) {
@@ -76,49 +76,53 @@ export class Enemy extends Phaser.GameObjects.Container {
 
     // 1) 進路上 (同レーンで自分の前) に味方がいるかチェック
     const blocker = findBlockingAlly(this, allies);
-    const meleeRange = CELL_SIZE * 0.7;
-    let firing = false;
+    const rangePx = (this.data_.range || 2.5) * CELL_SIZE;
+    let fireTarget = null;
 
     if (blocker) {
       const dx = blocker.x - this.x;
-      if (dx <= meleeRange) {
-        firing = true; // 停止してコメント発射
+      const dy = blocker.y - this.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= rangePx) {
+        fireTarget = blocker;
       } else {
-        // 近接距離まではブロッカーに向かって進む（Y は揃える）
+        // 射程外: ブロッカーに向かって進む（Y は揃える）
         const step = (this.data_.speed * delta) / 1000;
-        const tdy = blocker.y - this.y;
-        const tdist = Math.hypot(dx, tdy);
-        this.x += (dx / tdist) * step;
-        this.y += (tdy / tdist) * step * 0.3;
+        this.x += (dx / dist) * step;
+        this.y += (dy / dist) * step * 0.3;
       }
     } else {
       // 2) ブロッカーがなければ主人公方向にスムーズに進む
       const dx = this.influencer.x - this.x;
       const dy = this.influencer.y - this.y;
       const dist = Math.hypot(dx, dy);
-      if (dist > ENEMY_TALK_RANGE) {
+      if (dist <= rangePx) {
+        fireTarget = this.influencer;
+      } else {
         const step = (this.data_.speed * delta) / 1000;
         this.x += (dx / dist) * step;
         this.y += (dy / dist) * step * 0.3;
-      } else {
-        firing = true; // 主人公射程内に入ったらコメント発射
       }
     }
 
-    if (firing && time - this.lastTalkAt > ENEMY_TALK_INTERVAL_MS) {
-      this.lastTalkAt = time;
-      this.fireComment();
+    // 射程内にターゲットがいる時だけ発射 (味方と同じルール)
+    if (fireTarget) {
+      const intervalMs = this.data_.attackIntervalMs || ENEMY_TALK_INTERVAL_MS;
+      if (time - this.lastTalkAt > intervalMs) {
+        this.lastTalkAt = time;
+        this.fireComment(fireTarget);
+      }
     }
 
     // 透視: 現在 Y に応じた表示倍率と前後関係を毎フレ更新
     this.applyPerspective();
   }
 
-  fireComment() {
+  fireComment(target) {
     const line = Phaser.Utils.Array.GetRandom(this.data_.talkLines);
-    // キャラ右側少し前から発射
-    const muzzleX = this.x + (this.data_.radius * 1.2);
-    this.scene.addComment('enemy', muzzleX, this.y, line, this.data_.atk);
+    const dirX = target ? (target.x - this.x) : 1;
+    const dirY = target ? (target.y - this.y) : 0;
+    this.scene.addComment('enemy', this.x, this.y, line, this.data_.atk, dirX, dirY);
   }
 
   takeDamage(amount) {

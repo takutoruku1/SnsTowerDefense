@@ -5,6 +5,7 @@ import {
   FIELD_X, FIELD_Y,
   INFLUENCER_X, INFLUENCER_Y,
   COST_START, COST_MAX, COST_REGEN_PER_SEC,
+  PANEL_X,
   perspectiveX, entityScaleAtRow, rowAtY,
 } from '../data/config.js';
 import { ALLIES, MVP_ALLIES } from '../data/allies.js';
@@ -27,11 +28,11 @@ export class GameScene extends Phaser.Scene {
     bg.fillStyle(0x1a0a1f, 1);
     bg.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // 炎上エリア（左半分）と SNSエリア（右半分）の境界
+    // 炎上エリア（左）と SNSエリア（右）の境界
     bg.fillStyle(0x2a0815, 0.4);
-    bg.fillRect(0, 0, GAME_WIDTH * 0.62, GAME_HEIGHT);
+    bg.fillRect(0, 0, PANEL_X, GAME_HEIGHT);
     bg.fillStyle(0x0c1530, 0.4);
-    bg.fillRect(GAME_WIDTH * 0.62, 0, GAME_WIDTH * 0.38, GAME_HEIGHT);
+    bg.fillRect(PANEL_X, 0, GAME_WIDTH - PANEL_X, GAME_HEIGHT);
 
     // タイトル
     this.add.text(20, 16, 'SNS × タワーディフェンス', {
@@ -70,6 +71,15 @@ export class GameScene extends Phaser.Scene {
     this.events.on('enemy-killed', (enemy) => {
       this.enemies = this.enemies.filter(e => e !== enemy);
       this.events.emit('enemies-changed', this.remainingCount());
+
+      // 撃破報酬コスト
+      const reward = enemy.data_ && enemy.data_.reward ? enemy.data_.reward : 0;
+      if (reward > 0 && !this.gameOver) {
+        this.cost = Math.min(COST_MAX, this.cost + reward);
+        this.events.emit('cost-changed', Math.floor(this.cost), COST_MAX);
+        this.showCostPopup(enemy.x, enemy.y, reward);
+      }
+
       if (this.waveFinished && this.enemies.length === 0) {
         this.handleWaveClear();
       }
@@ -155,6 +165,32 @@ export class GameScene extends Phaser.Scene {
   highlightCell(c, r, on) {
     this.cellHighlight.clear();
     if (!on || !this.selectedAllyId || this.cellOccupancy[c][r]) return;
+
+    // 1) 配置セル本体（ピンク台形）
+    this.drawCellTrapezoid(c, r, 0xff44aa, 0.20, 0xff66cc, 0.85, 2);
+
+    // 2) 射程セル（2D ユークリッド）— 全方向で range セル以内をシアンで強調
+    const allyData = ALLIES[this.selectedAllyId];
+    if (!allyData) return;
+    const range = allyData.range;
+    const partialMax = range + 0.5; // 端数セルもうっすら表示
+
+    for (let r2 = 0; r2 < GRID_ROWS; r2++) {
+      for (let c2 = 0; c2 < GRID_COLS; c2++) {
+        if (c2 === c && r2 === r) continue; // 自分のセルはスキップ
+        const dx = c2 - c;
+        const dy = r2 - r;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= range) {
+          this.drawCellTrapezoid(c2, r2, 0x66ccff, 0.14, 0x88ddff, 0.6, 1.5);
+        } else if (dist <= partialMax) {
+          this.drawCellTrapezoid(c2, r2, 0x66ccff, 0.06, 0x88ddff, 0.35, 1);
+        }
+      }
+    }
+  }
+
+  drawCellTrapezoid(c, r, fillColor, fillAlpha, strokeColor, strokeAlpha, lineWidth) {
     const lx0 = FIELD_X + c * CELL_SIZE;
     const lx1 = lx0 + CELL_SIZE;
     const y0 = FIELD_Y + r * CELL_SIZE;
@@ -165,9 +201,9 @@ export class GameScene extends Phaser.Scene {
       { x: perspectiveX(lx1, r + 1), y: y1 },
       { x: perspectiveX(lx0, r + 1), y: y1 },
     ];
-    this.cellHighlight.fillStyle(0xff44aa, 0.18);
+    this.cellHighlight.fillStyle(fillColor, fillAlpha);
     this.cellHighlight.fillPoints(pts, true);
-    this.cellHighlight.lineStyle(2, 0xff66cc, 0.85);
+    this.cellHighlight.lineStyle(lineWidth, strokeColor, strokeAlpha);
     this.cellHighlight.strokePoints(pts, true);
   }
 
@@ -193,6 +229,26 @@ export class GameScene extends Phaser.Scene {
 
   flashCostInsufficient() {
     this.cameras.main.flash(120, 80, 0, 0);
+  }
+
+  showCostPopup(x, y, amount) {
+    const popup = this.add.text(x, y - 10, `+${amount}`, {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '20px',
+      color: '#ffcc44',
+      stroke: '#1a0520',
+      strokeThickness: 4,
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(2200);
+
+    this.tweens.add({
+      targets: popup,
+      y: y - 50,
+      alpha: 0,
+      duration: 800,
+      ease: 'Quad.easeOut',
+      onComplete: () => popup.destroy(),
+    });
   }
 
   startWave(idx) {
@@ -300,12 +356,12 @@ export class GameScene extends Phaser.Scene {
       stroke: '#000',
       strokeThickness: 6,
       fontStyle: 'bold',
-    }).setOrigin(0.5).setAlpha(0);
+    }).setOrigin(0.5).setAlpha(0).setDepth(3000);
     const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, '次の炎上が迫っています…', {
       fontFamily: '"Noto Sans JP", sans-serif',
       fontSize: '18px',
       color: '#ffffff',
-    }).setOrigin(0.5).setAlpha(0);
+    }).setOrigin(0.5).setAlpha(0).setDepth(3000);
 
     this.tweens.add({
       targets: [main, sub],
@@ -329,7 +385,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   showEndMessage(text, color, sub) {
-    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6);
+    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
+      .setDepth(3000);
     const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 70, text, {
       fontFamily: '"Noto Sans JP", sans-serif',
       fontSize: '72px',
@@ -337,23 +394,24 @@ export class GameScene extends Phaser.Scene {
       stroke: '#000',
       strokeThickness: 6,
       fontStyle: 'bold',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(3001);
     const subText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10, sub, {
       fontFamily: '"Noto Sans JP", sans-serif',
       fontSize: '22px',
       color: '#ffffff',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(3001);
 
     const btnY = GAME_HEIGHT / 2 + 100;
     const btn = this.add.rectangle(GAME_WIDTH / 2, btnY, 260, 56, 0x1a0520)
       .setStrokeStyle(2, 0xff44aa)
-      .setInteractive({ useHandCursor: true });
+      .setInteractive({ useHandCursor: true })
+      .setDepth(3001);
     const btnText = this.add.text(GAME_WIDTH / 2, btnY, 'タイトルへ戻る', {
       fontFamily: '"Noto Sans JP", sans-serif',
       fontSize: '20px',
       color: '#ff77cc',
       fontStyle: 'bold',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(3002);
 
     [overlay, main, subText, btn, btnText].forEach(o => o.setAlpha(0));
     this.tweens.add({ targets: [overlay, main, subText, btn, btnText], alpha: 1, duration: 400 });
@@ -386,19 +444,17 @@ export class GameScene extends Phaser.Scene {
     this.comments = this.comments.filter(c => c.scene);
   }
 
-  addComment(side, x, y, text, atk) {
-    const c = new Comment(this, x, y, { side, text, hp: atk, damage: atk });
+  addComment(side, x, y, text, atk, dirX = 0, dirY = 0) {
+    const c = new Comment(this, x, y, { side, text, hp: atk, damage: atk, dirX, dirY });
     this.comments.push(c);
     return c;
   }
 
   resolveCommentCollisions() {
-    const HIT = 26;
-    const HIT_SQ = HIT * HIT;
-    const LANE_TOL = CELL_SIZE * 0.55;
-    const HIT_TARGET = 30;
-    const INF_HIT_X = 60;
-    const INF_LANE_TOL = 160;
+    // 全衝突を bounding circle で判定（2D 飛行に対応）
+    const HIT_CC_SQ = 26 * 26;
+    const HIT_TGT_SQ = 36 * 36;
+    const HIT_INF_SQ = 55 * 55;
 
     // 1) コメント同士 (敵 vs 味方): 互いに削り合う
     for (let i = 0; i < this.comments.length; i++) {
@@ -409,7 +465,7 @@ export class GameScene extends Phaser.Scene {
         if (b.dead || b.side !== 'ally') continue;
         const dx = a.x - b.x;
         const dy = a.y - b.y;
-        if (dx * dx + dy * dy < HIT_SQ) {
+        if (dx * dx + dy * dy < HIT_CC_SQ) {
           const ad = a.damage, bd = b.damage;
           a.hit(bd);
           b.hit(ad);
@@ -417,13 +473,14 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 2) 味方コメント → 敵 にヒット
+    // 2) 味方コメント → 敵
     for (const c of this.comments) {
       if (c.dead || c.side !== 'ally') continue;
       for (const e of this.enemies) {
         if (!e.alive) continue;
-        if (Math.abs(e.y - c.y) > LANE_TOL) continue;
-        if (Math.abs(e.x - c.x) < HIT_TARGET) {
+        const dx = e.x - c.x;
+        const dy = e.y - c.y;
+        if (dx * dx + dy * dy < HIT_TGT_SQ) {
           e.takeDamage(c.damage);
           c.fade();
           break;
@@ -431,13 +488,14 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // 3) 敵コメント → 味方 (Ally) にヒット
+    // 3) 敵コメント → 味方 (Ally)
     for (const c of this.comments) {
       if (c.dead || c.side !== 'enemy') continue;
       for (const ally of this.allies) {
         if (!ally.alive) continue;
-        if (Math.abs(ally.y - c.y) > LANE_TOL) continue;
-        if (Math.abs(ally.x - c.x) < HIT_TARGET) {
+        const dx = ally.x - c.x;
+        const dy = ally.y - c.y;
+        if (dx * dx + dy * dy < HIT_TGT_SQ) {
           ally.takeDamage(c.damage);
           c.fade();
           break;
@@ -448,8 +506,9 @@ export class GameScene extends Phaser.Scene {
     // 4) 敵コメント → 主人公
     for (const c of this.comments) {
       if (c.dead || c.side !== 'enemy') continue;
-      if (Math.abs(this.influencer.y - c.y) > INF_LANE_TOL) continue;
-      if (Math.abs(this.influencer.x - c.x) < INF_HIT_X) {
+      const dx = this.influencer.x - c.x;
+      const dy = this.influencer.y - c.y;
+      if (dx * dx + dy * dy < HIT_INF_SQ) {
         const dead = this.influencer.takeDamage(c.damage);
         this.events.emit('hp-changed', this.influencer.hp, this.influencer.maxHp);
         if (dead) this.handleGameOver();

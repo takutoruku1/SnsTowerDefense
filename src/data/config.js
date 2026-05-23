@@ -2,17 +2,22 @@
 export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 
-// グリッド: 6列 × 4行（配置可能セル）
-export const GRID_COLS = 6;
-export const GRID_ROWS = 4;
+// 画面レイアウト: フィールド 72% / 右パネル 28%
+export const FIELD_AREA_RATIO = 0.72;
+export const PANEL_X = GAME_WIDTH * FIELD_AREA_RATIO;
+export const PANEL_WIDTH = GAME_WIDTH - PANEL_X;
+
+// グリッド: 8列 × 5行（配置可能セル）
+export const GRID_COLS = 8;
+export const GRID_ROWS = 5;
 export const CELL_SIZE = 96;
 
 // フィールドの左上座標（炎上エリア = 左、SNSエリア = 右側UIに寄せる）
-export const FIELD_X = 60;
-export const FIELD_Y = 140;
+export const FIELD_X = 30;
+export const FIELD_Y = 100;
 
 // 主人公（インフルエンサー）の配置: フィールドの右端の少し外
-export const INFLUENCER_X = FIELD_X + GRID_COLS * CELL_SIZE + 80;
+export const INFLUENCER_X = FIELD_X + GRID_COLS * CELL_SIZE + 10;
 export const INFLUENCER_Y = FIELD_Y + (GRID_ROWS * CELL_SIZE) / 2;
 
 // 主人公HP（モック準拠）
