@@ -2,6 +2,7 @@
 // 左からフィールドを横切り、主人公の近くに来たら「話しかけ」攻撃を始める
 import { ENEMIES } from '../data/enemies.js';
 import { ENEMY_TALK_RANGE, ENEMY_TALK_INTERVAL_MS } from '../data/config.js';
+import { SpeechBubble } from './SpeechBubble.js';
 
 export class Enemy extends Phaser.GameObjects.Container {
   constructor(scene, x, y, enemyId, influencer) {
@@ -56,20 +57,13 @@ export class Enemy extends Phaser.GameObjects.Container {
 
   talk() {
     const line = Phaser.Utils.Array.GetRandom(this.data_.talkLines);
-    const text = this.scene.add.text(this.x, this.y - this.data_.radius - 18, line, {
-      fontFamily: '"Noto Sans JP", sans-serif',
-      fontSize: '14px',
-      color: '#ffcc66',
-      stroke: '#000000',
-      strokeThickness: 3,
-    }).setOrigin(0.5);
-
-    this.scene.tweens.add({
-      targets: text,
-      y: text.y - 30,
-      alpha: 0,
-      duration: 1100,
-      onComplete: () => text.destroy(),
+    new SpeechBubble(this.scene, this.x, this.y - this.data_.radius - 18, line, {
+      textColor: '#ffcc66',
+      borderColor: 0xaa3322,
+      fillColor: 0x1a0810,
+      fontSize: '12px',
+      tailDir: 1,
+      duration: 1000,
     });
 
     // 主人公にダメージ
