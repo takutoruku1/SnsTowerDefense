@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 *.log
+
+# 規約スナップショット (第三者著作物のため git 管理しない / ローカルのみ)
+legal_snapshots/
