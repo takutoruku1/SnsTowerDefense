@@ -95,6 +95,19 @@ export class UIScene extends Phaser.Scene {
         c.container.bg.setStrokeStyle(c.id === id ? 3 : 1, c.id === id ? 0xff66cc : 0x444466);
       });
     });
+
+    // UIScene が止まる時、GameScene 側に残った購読を全部外す
+    // (2回目の起動でリスナーが二重発火して破棄済みオブジェクトを触るのを防止)
+    this.events.once('shutdown', () => {
+      const gs = this.scene.get('GameScene');
+      if (gs && gs.events) {
+        gs.events.removeAllListeners('cost-changed');
+        gs.events.removeAllListeners('hp-changed');
+        gs.events.removeAllListeners('wave-changed');
+        gs.events.removeAllListeners('enemies-changed');
+        gs.events.removeAllListeners('selection-updated');
+      }
+    });
   }
 
   makeCard(x, y, w, h, a) {

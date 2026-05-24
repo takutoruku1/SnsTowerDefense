@@ -21,6 +21,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // 2回目以降の起動でも events emitter は同一インスタンスが使い回されるので、
+    // 念のため前回登録された全リスナーをクリアしておく
+    this.events.removeAllListeners('enemy-killed');
+    this.events.removeAllListeners('ally-killed');
+    this.events.removeAllListeners('select-ally');
+
     this.cameras.main.setBackgroundColor('#0c0918');
 
     // 背景: SNS的なざらつき

@@ -31,7 +31,13 @@ export class Influencer extends Phaser.GameObjects.Container {
     this.hp = this.maxHp;
 
     // sprite を先に作って足元 Y を決め、その後に shadow → sprite の順で重ねる
-    this.sprite = scene.add.image(0, 0, 'influencer_happy').setOrigin(0.5, 0.6);
+    this.sprite = scene.add.image(0, 0, this.textureKey('happy')).setOrigin(0.5, 0.6);
+
+    // ソース画像の解像度によらず一定の高さに統一 (男女で原寸が異なるため必須)
+    const TARGET_HEIGHT = 280;
+    const aspect = this.sprite.width / this.sprite.height;
+    this.sprite.setDisplaySize(TARGET_HEIGHT * aspect, TARGET_HEIGHT);
+
     // origin (0.5, 0.6) なので足元は y = displayHeight * 0.4。少し下に余裕を持たせる。
     const feetY = this.sprite.displayHeight * 0.4 - 6;
     const shadowW = Math.max(80, this.sprite.displayWidth * 0.55);
@@ -104,12 +110,19 @@ export class Influencer extends Phaser.GameObjects.Container {
     });
   }
 
+  textureKey(variant) {
+    const gender = (this.scene.registry && this.scene.registry.get('selectedGender')) || 'female';
+    const prefix = gender === 'male' ? 'influencer_male' : 'influencer';
+    return `${prefix}_${variant}`;
+  }
+
   updateVariant() {
     const ratio = this.hp / this.maxHp;
-    let key = 'influencer_happy';
-    if (ratio < HP_THRESHOLDS.STRESSED) key = 'influencer_broken';
-    else if (ratio < HP_THRESHOLDS.HAPPY) key = 'influencer_stressed';
+    let variant = 'happy';
+    if (ratio < HP_THRESHOLDS.STRESSED) variant = 'broken';
+    else if (ratio < HP_THRESHOLDS.HAPPY) variant = 'stressed';
 
+    const key = this.textureKey(variant);
     if (this.sprite.texture.key !== key) {
       this.sprite.setTexture(key);
     }

@@ -13,8 +13,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    // 主人公: happy.png のみ読み込み試行
+    // 主人公: 女版 (happy.png) と男版 (Men_happy.png)
     this.load.image('influencer_happy_src', `${ASSET_BASE}/influencer/happy.png`);
+    this.load.image('influencer_happy_src_male', `${ASSET_BASE}/influencer/Men_happy.png`);
 
     Object.values(ALLIES).forEach(a => {
       this.load.image(a.texture, `${ASSET_BASE}/allies/${a.id.toLowerCase()}.png`);
@@ -24,8 +25,9 @@ export class BootScene extends Phaser.Scene {
       this.load.image(`enemy_${e.id.toLowerCase()}`, `${ASSET_BASE}/enemies/${e.id.toLowerCase()}.png`);
     });
 
-    // BGM
+    // BGM: 女版 (main.mp3) と男版 (男BGM.mp3 — 日本語ファイル名は encodeURI で安全に)
     this.load.audio('bgm_main', `${ASSET_BASE}/bgm/main.mp3`);
+    this.load.audio('bgm_main_male', encodeURI(`${ASSET_BASE}/bgm/男BGM.mp3`));
 
     this.load.on('loaderror', (file) => {
       console.warn('[asset missing → placeholder]', file.key, file.src);
@@ -33,15 +35,21 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // --- 主人公差分 ---
+    // --- 主人公差分 (女) ---
     if (this.textures.exists('influencer_happy_src')) {
-      // happy.png 読み込み成功 → 加工で3段階を生成
-      this.deriveInfluencerVariants('influencer_happy_src');
+      this.deriveInfluencerVariants('influencer_happy_src', 'influencer');
     } else {
-      // happy.png が無い → 図形プレースホルダーで全段階生成
       this.generateInfluencerPlaceholder('influencer_happy');
       this.generateInfluencerPlaceholder('influencer_stressed', 'stressed');
       this.generateInfluencerPlaceholder('influencer_broken', 'broken');
+    }
+    // --- 主人公差分 (男) ---
+    if (this.textures.exists('influencer_happy_src_male')) {
+      this.deriveInfluencerVariants('influencer_happy_src_male', 'influencer_male');
+    } else {
+      this.generateInfluencerPlaceholder('influencer_male_happy');
+      this.generateInfluencerPlaceholder('influencer_male_stressed', 'stressed');
+      this.generateInfluencerPlaceholder('influencer_male_broken', 'broken');
     }
 
     Object.values(ALLIES).forEach(a => {
@@ -56,27 +64,27 @@ export class BootScene extends Phaser.Scene {
     this.scene.start('TitleScene');
   }
 
-  // --- happy.png から stressed / broken を動的生成 ---
-  deriveInfluencerVariants(sourceKey) {
+  // --- happy 画像から stressed / broken を動的生成 (女男共用) ---
+  deriveInfluencerVariants(sourceKey, targetPrefix = 'influencer') {
     const src = this.textures.get(sourceKey).getSourceImage();
     const w = src.width;
     const h = src.height;
 
     // happy はソース画像をそのまま新キーで登録
     const happyCanvas = this.makeCanvasFromImage(src, w, h);
-    this.textures.addCanvas('influencer_happy', happyCanvas);
+    this.textures.addCanvas(`${targetPrefix}_happy`, happyCanvas);
 
     // stressed: 軽い脱彩 + 赤み + 汗
     const stressedCanvas = this.makeCanvasFromImage(src, w, h);
     this.applyPixelEffect(stressedCanvas, 'stressed');
     this.drawOverlay(stressedCanvas, 'stressed');
-    this.textures.addCanvas('influencer_stressed', stressedCanvas);
+    this.textures.addCanvas(`${targetPrefix}_stressed`, stressedCanvas);
 
     // broken: 強脱彩 + 暗化 + 青み + 涙 + ヒビ
     const brokenCanvas = this.makeCanvasFromImage(src, w, h);
     this.applyPixelEffect(brokenCanvas, 'broken');
     this.drawOverlay(brokenCanvas, 'broken');
-    this.textures.addCanvas('influencer_broken', brokenCanvas);
+    this.textures.addCanvas(`${targetPrefix}_broken`, brokenCanvas);
   }
 
   makeCanvasFromImage(img, w, h) {

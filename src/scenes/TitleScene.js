@@ -69,15 +69,52 @@ export class TitleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // WAVE 数の案内
-    this.add.text(GAME_WIDTH / 2, titleY + 230, `全 ${WAVES.length} WAVE`, {
+    this.add.text(GAME_WIDTH / 2, titleY + 220, `全 ${WAVES.length} WAVE`, {
       fontFamily: '"Noto Sans JP", sans-serif',
-      fontSize: '16px',
+      fontSize: '14px',
       color: '#ffcc44',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
+    // === 主人公選択 ===
+    if (!this.registry.has('selectedGender')) {
+      this.registry.set('selectedGender', 'female'); // デフォルト
+    }
+
+    const charLabelY = titleY + 250;
+    this.add.text(GAME_WIDTH / 2, charLabelY, '主人公を選択', {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '14px',
+      color: '#aabbdd',
+    }).setOrigin(0.5);
+
+    const cardW = 110, cardH = 130;
+    const gapX = 60;
+    const cardY = charLabelY + 20 + cardH / 2;
+    const femaleX = GAME_WIDTH / 2 - (cardW + gapX) / 2;
+    const maleX = GAME_WIDTH / 2 + (cardW + gapX) / 2;
+
+    const femaleCard = this.makeCharCard(femaleX, cardY, cardW, cardH, '女', 'influencer_happy', 0xff66cc);
+    const maleCard = this.makeCharCard(maleX, cardY, cardW, cardH, '男', 'influencer_male_happy', 0x66aaff);
+
+    const updateSelection = () => {
+      const sel = this.registry.get('selectedGender');
+      femaleCard.bg.setStrokeStyle(sel === 'female' ? 3 : 1, sel === 'female' ? 0xff66cc : 0x444466);
+      maleCard.bg.setStrokeStyle(sel === 'male' ? 3 : 1, sel === 'male' ? 0x66aaff : 0x444466);
+    };
+    updateSelection();
+
+    femaleCard.bg.on('pointerdown', () => {
+      this.registry.set('selectedGender', 'female');
+      updateSelection();
+    });
+    maleCard.bg.on('pointerdown', () => {
+      this.registry.set('selectedGender', 'male');
+      updateSelection();
+    });
+
     // スタートボタン
-    const btnY = GAME_HEIGHT - 180;
+    const btnY = GAME_HEIGHT - 110;
     const btnBg = this.add.rectangle(GAME_WIDTH / 2, btnY, 320, 64, 0x1a0520)
       .setStrokeStyle(2, 0xff44aa)
       .setInteractive({ useHandCursor: true });
@@ -107,18 +144,39 @@ export class TitleScene extends Phaser.Scene {
       btnBg.setStrokeStyle(2, 0xff44aa);
     });
 
+    let starting = false;
     const startGame = () => {
-      // BGM 再生開始 (autoplay 制限回避のためユーザー操作のタイミングで)
-      let bgm = this.sound.get('bgm_main');
-      if (!bgm) bgm = this.sound.add('bgm_main', { loop: true, volume: 0.4 });
+      if (starting) return; // 二重起動防止
+      starting = true;
+
+      // BGM 再生開始 — 選択された主人公の性別で曲を切り替え
+      const gender = this.registry.get('selectedGender') || 'female';
+      const bgmKey = gender === 'male' ? 'bgm_main_male' : 'bgm_main';
+      const otherKey = gender === 'male' ? 'bgm_main' : 'bgm_main_male';
+
+      // 反対の BGM が鳴っていたら停止
+      const otherBgm = this.sound.get(otherKey);
+      if (otherBgm && otherBgm.isPlaying) otherBgm.stop();
+
+      let bgm = this.sound.get(bgmKey);
+      if (!bgm) bgm = this.sound.add(bgmKey, { loop: true, volume: 0.4 });
       if (!bgm.isPlaying) bgm.play();
 
-      this.scene.start('GameScene');
+      // 前回のセッションが残っていれば完全停止してから再起動
+      this.scene.stop('UIScene');
+      this.scene.stop('GameScene');
       this.scene.launch('UIScene');
+      this.scene.start('GameScene');
     };
     btnBg.on('pointerdown', startGame);
     this.input.keyboard.on('keydown-SPACE', startGame);
     this.input.keyboard.on('keydown-ENTER', startGame);
+
+    // シーン終了時に keyboard リスナーを掃除 (再 boot 時の二重発火を防ぐ)
+    this.events.once('shutdown', () => {
+      this.input.keyboard.off('keydown-SPACE', startGame);
+      this.input.keyboard.off('keydown-ENTER', startGame);
+    });
 
     // フッター
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 40, '操作: 右パネルの味方を選択 → 左フィールドのセルをクリックで配置', {
@@ -126,5 +184,29 @@ export class TitleScene extends Phaser.Scene {
       fontSize: '12px',
       color: '#8878a8',
     }).setOrigin(0.5);
+  }
+
+  makeCharCard(x, y, w, h, label, textureKey, accentColor) {
+    const bg = this.add.rectangle(x, y, w, h, 0x1a0820)
+      .setStrokeStyle(1, 0x444466)
+      .setInteractive({ useHandCursor: true });
+
+    // キャラクター画像 (縦横を中央寄せにスケール、上寄り)
+    const img = this.add.image(x, y - 12, textureKey).setDisplaySize(70, 90);
+
+    // ラベル (下端)
+    const labelText = this.add.text(x, y + h / 2 - 14, label, {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '18px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
+
+    bg.on('pointerover', () => bg.setFillStyle(0x2a0a35));
+    bg.on('pointerout', () => bg.setFillStyle(0x1a0820));
+
+    return { bg, img, labelText, accentColor };
   }
 }
