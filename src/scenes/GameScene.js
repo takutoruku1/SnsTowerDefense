@@ -42,12 +42,16 @@ export class GameScene extends Phaser.Scene {
 
     // タイトル
     this.add.text(20, 16, 'SNS × タワーディフェンス', {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Dela Gothic One", "Noto Sans JP", sans-serif',
       fontSize: '24px',
       color: '#ffffff',
+    });
+    this.add.text(20, 50, '炎上エリア', {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '16px',
+      color: '#ff6688',
       fontStyle: 'bold',
     });
-    this.add.text(20, 50, '炎上エリア', { fontSize: '16px', color: '#ff6688' });
 
     // グリッド描画
     this.drawGrid();
@@ -285,12 +289,11 @@ export class GameScene extends Phaser.Scene {
 
   showWaveStartBanner(waveNum, durationMs) {
     const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, `WAVE ${waveNum}`, {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Dela Gothic One", "Noto Sans JP", sans-serif',
       fontSize: '54px',
       color: '#ff77cc',
       stroke: '#1a0520',
       strokeThickness: 6,
-      fontStyle: 'bold',
     }).setOrigin(0.5).setAlpha(0).setDepth(2500);
     const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30, '炎上が迫っています…', {
       fontFamily: '"Noto Sans JP", sans-serif',
@@ -356,12 +359,11 @@ export class GameScene extends Phaser.Scene {
 
   showWaveClearBanner(onDone) {
     const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `WAVE ${this.currentWaveIdx + 1} CLEAR!`, {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Dela Gothic One", "Noto Sans JP", sans-serif',
       fontSize: '64px',
       color: '#ffcc44',
       stroke: '#000',
       strokeThickness: 6,
-      fontStyle: 'bold',
     }).setOrigin(0.5).setAlpha(0).setDepth(3000);
     const sub = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60, '次の炎上が迫っています…', {
       fontFamily: '"Noto Sans JP", sans-serif',
@@ -394,12 +396,11 @@ export class GameScene extends Phaser.Scene {
     const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.6)
       .setDepth(3000);
     const main = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 70, text, {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Dela Gothic One", "Noto Sans JP", sans-serif',
       fontSize: '72px',
       color,
       stroke: '#000',
       strokeThickness: 6,
-      fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(3001);
     const subText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10, sub, {
       fontFamily: '"Noto Sans JP", sans-serif',
@@ -413,10 +414,9 @@ export class GameScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(3001);
     const btnText = this.add.text(GAME_WIDTH / 2, btnY, 'タイトルへ戻る', {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Dela Gothic One", "Noto Sans JP", sans-serif',
       fontSize: '20px',
       color: '#ff77cc',
-      fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(3002);
 
     [overlay, main, subText, btn, btnText].forEach(o => o.setAlpha(0));

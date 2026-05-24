@@ -33,7 +33,7 @@ export class Comment extends Phaser.GameObjects.Container {
     const borderColor = side === 'enemy' ? 0xaa3322 : 0xff66cc;
 
     this.label = scene.add.text(0, 0, text, {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Yusei Magic", "Noto Sans JP", sans-serif',
       fontSize: '12px',
       color: textColor,
     }).setOrigin(0.5);

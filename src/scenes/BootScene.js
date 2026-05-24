@@ -61,7 +61,21 @@ export class BootScene extends Phaser.Scene {
       if (!this.textures.exists(key)) this.generateEnemyPlaceholder(key, e);
     });
 
-    this.scene.start('TitleScene');
+    // Web フォントが Phaser のテキスト生成時に間に合うよう、読み込みを待ってから遷移
+    this.waitForFonts().then(() => {
+      this.scene.start('TitleScene');
+    });
+  }
+
+  waitForFonts() {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    return Promise.all([
+      document.fonts.load('400 16px "Dela Gothic One"'),
+      document.fonts.load('400 16px "Noto Sans JP"'),
+      document.fonts.load('700 16px "Noto Sans JP"'),
+      document.fonts.load('900 16px "Noto Sans JP"'),
+      document.fonts.load('400 16px "Yusei Magic"'),
+    ]).catch(() => {}); // 失敗してもゲームは進める (フォールバックで表示)
   }
 
   // --- happy 画像から stressed / broken を動的生成 (女男共用) ---

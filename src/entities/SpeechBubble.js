@@ -19,7 +19,7 @@ export class SpeechBubble extends Phaser.GameObjects.Container {
     this.setDepth(depth);
 
     this.text = scene.add.text(0, 0, line, {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Yusei Magic", "Noto Sans JP", sans-serif',
       fontSize,
       color: textColor,
     }).setOrigin(0.5);

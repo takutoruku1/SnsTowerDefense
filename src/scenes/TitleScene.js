@@ -29,10 +29,9 @@ export class TitleScene extends Phaser.Scene {
     // タイトル本体
     const titleY = 200;
     const title = this.add.text(GAME_WIDTH / 2, titleY, 'SNS × タワーディフェンス', {
-      fontFamily: '"Noto Sans JP", "Hiragino Sans", sans-serif',
+      fontFamily: '"Dela Gothic One", "Noto Sans JP", sans-serif',
       fontSize: '64px',
       color: '#ff77cc',
-      fontStyle: 'bold',
       stroke: '#1a0520',
       strokeThickness: 8,
     }).setOrigin(0.5);
@@ -119,10 +118,9 @@ export class TitleScene extends Phaser.Scene {
       .setStrokeStyle(2, 0xff44aa)
       .setInteractive({ useHandCursor: true });
     const btnText = this.add.text(GAME_WIDTH / 2, btnY, 'クリックして開始', {
-      fontFamily: '"Noto Sans JP", sans-serif',
+      fontFamily: '"Dela Gothic One", "Noto Sans JP", sans-serif',
       fontSize: '24px',
       color: '#ff77cc',
-      fontStyle: 'bold',
     }).setOrigin(0.5);
 
     // ボタンの脈動
