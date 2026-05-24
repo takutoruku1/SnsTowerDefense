@@ -29,11 +29,27 @@
       display: block;
       box-shadow: 0 0 40px rgba(255, 0, 128, 0.3);
     }
+    /* 画像のドラッグ/選択を抑止 (アセット保護の気休め) */
+    img, canvas {
+      -webkit-user-drag: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
   <div id="game"></div>
   <script type="module" src="./src/main.js"></script>
+  <script>
+    // 右クリックメニューを抑止 (お飾り程度の抑止力。本気の人には防げない)
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Ctrl+S / Ctrl+U などのページ保存系もブロック
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && ['s', 'u'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+      }
+    });
+  </script>
 </body>
 </html>

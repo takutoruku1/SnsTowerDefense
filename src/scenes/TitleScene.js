@@ -177,10 +177,17 @@ export class TitleScene extends Phaser.Scene {
     });
 
     // フッター
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 40, '操作: 右パネルの味方を選択 → 左フィールドのセルをクリックで配置', {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 50, '操作: 右パネルの味方を選択 → 左フィールドのセルをクリックで配置', {
       fontFamily: '"Noto Sans JP", sans-serif',
       fontSize: '12px',
       color: '#8878a8',
+    }).setOrigin(0.5);
+
+    // 著作権表記
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 24, '© 2026 takutoruku1 — 画像・音楽・コードの無断転載/二次利用を禁じます', {
+      fontFamily: '"Noto Sans JP", sans-serif',
+      fontSize: '11px',
+      color: '#6a5a8a',
     }).setOrigin(0.5);
   }
 
