@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>SNS TD — Effects Lab</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Noto+Sans+JP:wght@400;700;900&family=Yusei+Magic&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-0: #07060f;
+    --bg-1: #110a1f;
+    --pink: #ff3399;
+    --pink-soft: #ff77cc;
+    --pink-glow: rgba(255, 51, 153, 0.45);
+    --x-blue: #1d9bf0;
+    --x-blue-soft: rgba(29, 155, 240, 0.18);
+    --text: #ffffff;
+    --text-dim: #c3b6d4;
+    --panel-bg: rgba(20, 12, 36, 0.92);
+    --panel-line: rgba(255, 119, 204, 0.18);
+    --hot: #ff5252;
+    --hot-2: #ffb83d;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background:
+      radial-gradient(1200px 800px at 25% 20%, rgba(255, 51, 153, 0.08), transparent 60%),
+      radial-gradient(900px 600px at 80% 90%, rgba(29, 155, 240, 0.06), transparent 60%),
+      var(--bg-0);
+    color: var(--text);
+    font-family: "Noto Sans JP", "Hiragino Sans", sans-serif;
+    overflow: hidden;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    padding: 16px;
+    height: 100vh;
+  }
+  /* ──────────── Stage ──────────── */
+  .stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-1);
+    border: 1px solid var(--panel-line);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 0 60px rgba(255, 51, 153, 0.12) inset,
+      0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+  #game {
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+    max-width: 100%;
+    max-height: 100%;
+  }
+  .stage-label {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--pink-soft);
+    text-transform: uppercase;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .stage-foot {
+    position: absolute;
+    bottom: 10px;
+    right: 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .scene-toggle {
+    position: absolute;
+    bottom: 10px;
+    left: 14px;
+    display: flex;
+    gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+  }
+  .scene-toggle button {
+    background: rgba(0,0,0,0.4);
+    color: var(--text-dim);
+    border: 1px solid var(--panel-line);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+  }
+  .scene-toggle button.on {
+    background: var(--pink-glow);
+    color: #fff;
+    border-color: var(--pink-soft);
+  }
+
+  /* ──────────── Panel ──────────── */
+  .panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-line);
+    border-radius: 12px;
+    padding: 18px 16px;
+    overflow-y: auto;
+    backdrop-filter: blur(8px);
+  }
+  .panel::-webkit-scrollbar { width: 8px; }
+  .panel::-webkit-scrollbar-thumb { background: rgba(255,119,204,0.25); border-radius: 4px; }
+
+  .panel h1 {
+    margin: 0 0 4px;
+    font-family: "Dela Gothic One", "Noto Sans JP", sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+    color: #fff;
+    text-shadow: 0 0 18px var(--pink-glow);
+  }
+  .panel .sub {
+    margin: 0 0 18px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .section {
+    margin-bottom: 22px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--panel-line);
+  }
+  .section-title {
+    font-family: "Dela Gothic One", "Noto Sans JP", sans-serif;
+    font-size: 13px;
+    color: var(--pink-soft);
+    letter-spacing: 0.06em;
+  }
+  .section-id {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+  .section-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .fx-btn {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(255,51,153,0.10), rgba(255,51,153,0.04));
+    border: 1px solid rgba(255, 119, 204, 0.28);
+    color: #fff;
+    text-align: left;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    transition: transform 0.06s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .fx-btn:hover {
+    background: linear-gradient(180deg, rgba(255,51,153,0.22), rgba(255,51,153,0.08));
+    box-shadow: 0 0 18px var(--pink-glow);
+  }
+  .fx-btn:active { transform: translateY(1px) scale(0.99); }
+  .fx-btn .var-id {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--pink-soft);
+    background: rgba(255, 51, 153, 0.12);
+    border-radius: 4px;
+    padding: 2px 0;
+    text-align: center;
+  }
+  .fx-btn .var-name {
+    font-weight: 700;
+  }
+  .fx-btn .var-hint {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    opacity: 0.75;
+  }
+
+  /* footer controls */
+  .footer-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--panel-line);
+  }
+  .ctrl {
+    flex: 1 1 auto;
+    background: transparent;
+    border: 1px solid var(--panel-line);
+    color: var(--text-dim);
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .ctrl:hover { color: #fff; border-color: var(--pink-soft); }
+  .ctrl.on { color: #fff; background: var(--pink-glow); border-color: var(--pink-soft); }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <!-- ───── Stage ───── -->
+    <div class="stage" id="stage">
+      <canvas id="game" width="900" height="600"></canvas>
+      <div class="stage-label">▶ EFFECTS LAB / SNS × TD</div>
+      <div class="scene-toggle">
+        <button data-scene="game" class="on">GAME</button>
+        <button data-scene="plain">PLAIN</button>
+      </div>
+      <div class="stage-foot" id="fps">— fps</div>
+    </div>
+
+    <!-- ───── Control Panel ───── -->
+    <div class="panel" id="panel">
+      <h1>EFFECTS LAB</h1>
+      <p class="sub">エフェクト検証ページ / クリックで発火</p>
+      <div id="sections"></div>
+
+      <div class="footer-controls">
+        <button class="ctrl on" id="soundToggle">🔊 SOUND</button>
+        <button class="ctrl" id="clearBtn">CLEAR</button>
+        <button class="ctrl" id="autoBtn">AUTO</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="lab/core.js"></script>
+  <script src="lab/effects-bubbles.js"></script>
+  <script src="lab/effects-likes.js"></script>
+  <script src="lab/effects-flame.js"></script>
+  <script src="lab/effects-bonus.js"></script>
+  <script src="lab/ui.js"></script>
+</body>
+</html>
