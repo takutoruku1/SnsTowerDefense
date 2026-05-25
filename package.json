@@ -1,0 +1,19 @@
+{
+  "name": "snstowerdefense",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "炎上系インフルエンサーが主人公の、SNS世界観タワーディフェンス。 TLから集めた「味方の罵言雑言」や「擁護コメント」を配置して、襲い来る炎上を撃退する。",
+  "scripts": {
+    "record": "node scripts/record-testplay.mjs"
+  },
+  "devDependencies": {
+    "phaser": "3.80.1",
+    "playwright": "1.56.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:34357/git/takutoruku1/SnsTowerDefense"
+  },
+  "license": "ISC"
+}
